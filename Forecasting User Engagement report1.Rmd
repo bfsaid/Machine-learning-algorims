@@ -1,0 +1,757 @@
+---
+title: "Spotify_YS"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+date: "2023-04-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Importing the the useful packages
+```{r , include=TRUE , warning=TRUE}
+library(readr)
+library(tidyverse)
+library(corrplot)
+library(ggplot2)
+library(pROC)
+library(rpart)
+library(tree)
+```
+
+```{r }
+library(rpart.plot)
+library(caret)
+```
+# Importing data
+
+
+```{r }
+data_YT <- read_csv("C:/Users/hp/Desktop/freelancer work/Spotify_Youtube/data.csv")
+```
+# Manipulating data
+```{r }
+head(data_YT)
+```
+## Missing Value
+
+```{r }
+MissingValue<-colSums(is.na(data_YT))
+MissingValue
+```
+
+##  Removing Missing Value
+```{r }
+data_YT<-na.omit(data_YT)
+```
+# Statistics descriptive and data exploratory
+```{r }
+statistics<-data_YT%>%
+  sapply(summary)%>%
+  as.data.frame()
+statistics<-t(statistics)%>%
+  as.data.frame()
+statistics[,"sd"]<-data_YT%>%
+  sapply(sd)%>%
+  as.data.frame()
+print(statistics)
+
+```
+## correlation
+
+```{r }
+corrplot(cor(data_YT),method="square",addCoef.col="black",type="upper", tl.cex=.8, number.cex=.5)
+```
+
+## Histograms
+
+#### danceability
+```{r }
+
+data_YT$Song_Liked<-ifelse(data_YT$liked==1,"Liked","Disliked")
+
+ggplot(data_YT, aes(x=danceability,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='danceability', y='Frequency', title='Histogram of The danceability by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(energy, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+```
+#### Energy
+```{r }
+ggplot(data_YT, aes(x=energy,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='Energy', y='Frequency', title='Histogram of The Energy by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(energy, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+```
+
+#### Key
+```{r }
+ggplot(data_YT, aes(x=key,fill=Song_Liked,col=Song_Liked))+
+  geom_bar( position="identity")+
+  theme_minimal()+
+  labs(x='key', y='Frequency', title='Histogram of The kety by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(key, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+
+```
+#### Loudness
+```{r }
+
+
+ggplot(data_YT, aes(x=loudness,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='loudness', y='Frequency', title='Histogram of The Loudness by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(energy, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+```
+#### Speechiness
+```{r }
+ggplot(data_YT, aes(x=speechiness,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='Speechiness', y='Frequency', title='Histogram of The Speechiness by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+```{r }
+ggplot(data_YT, aes(speechiness, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+```
+
+#### Acousticness
+```{r }
+ggplot(data_YT, aes(x=acousticness,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='Acousticness', y='Frequency', title='Histogram of The Acousticness by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(acousticness, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+```
+#### Instrumentalness
+```{r }
+
+
+ggplot(data_YT, aes(x=instrumentalness,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='Instrumentalness', y='Frequency', title='Histogram of The Instrumentalness by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(instrumentalness, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+```
+
+#### Liveness
+```{r }
+ggplot(data_YT, aes(x=liveness,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='Liveness', y='Frequency', title='Histogram of The Liveness by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(liveness, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+```
+
+#### Valence
+```{r }
+ggplot(data_YT, aes(x=valence,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='Valence', y='Frequency', title='Histogram of The Valence by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(valence, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+```
+
+#### tempo
+```{r }
+
+
+ggplot(data_YT, aes(x=tempo,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='Tempo', y='Frequency', title='Histogram of The Tempo by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(tempo, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+```
+
+#### Duration_ms
+```{r }
+ggplot(data_YT, aes(x=duration_ms,fill=Song_Liked,col=Song_Liked))+
+  geom_histogram( position="identity",bins=20)+
+  theme_minimal()+
+  labs(x='Duration_ms', y='Frequency', title='Histogram of The Duration_ms by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(duration_ms, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+```
+
+#### time_signature
+```{r }
+ggplot(data_YT, aes(x=time_signature,fill=Song_Liked,col=Song_Liked))+
+  geom_bar( position="identity")+
+  theme_minimal()+
+  labs(x='time_signature', y='Frequency', title='Histogram of The time_signature by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(time_signature, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+```
+#### Time_signature
+```{r }
+ggplot(data_YT, aes(x=liked,fill=Song_Liked,col=Song_Liked))+
+  geom_bar(stat="bin",binwidth=0.65)+
+  theme_minimal()+
+  labs(y='Frequency', title='Liked vs Disliked songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+```{r }
+ggplot(data_YT, aes(time_signature, fill=Song_Liked)) + 
+  geom_density(alpha=.5) + 
+  scale_fill_manual(values = c('#999999','#E69F00')) + 
+  theme(legend.position = "none")
+
+
+```
+## Boxplot
+
+##### danceability
+```{r }
+ggplot(data_YT, aes(y=danceability, x=Song_Liked,fill=Song_Liked))+
+  geom_boxplot( position="identity")+
+  theme_minimal()+
+  labs( y='Danceability', title='Box plot of The danceability by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+#### Loudness
+```{r }
+ggplot(data_YT, aes(y=loudness,fill=Song_Liked,x=Song_Liked))+
+  geom_boxplot( position="identity")+
+  theme_minimal()+
+  labs( y='Loudness', title='Box plot of The Loudness by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+
+#### Speechiness
+```{r }
+ggplot(data_YT, aes(y=speechiness,fill=Song_Liked,x=Song_Liked))+
+  geom_boxplot( position="identity")+
+  theme_minimal()+
+  labs( y='Speechiness', title='Box plot of The Speechiness by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+#### Instrumentalness
+```{r }
+
+ggplot(data_YT, aes(y=instrumentalness,fill=Song_Liked,x=Song_Liked))+
+  geom_boxplot( position="identity")+
+  theme_minimal()+
+  labs( y='instrumentalness', title='Box plot of The instrumentalness by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+#####Duration_ms
+```{r }
+ggplot(data_YT, aes(y=duration_ms,fill=Song_Liked,x=Song_Liked))+
+  geom_boxplot( position="identity")+
+  theme_minimal()+
+  labs( y='Duration_ms', title='Box plot of The Duration by Liked & Disliked Songs')+
+  theme(plot.title = element_text(hjust=0.5, size=10, face='bold'),legend.position = "bottom")
+
+```
+# Split the data
+```{r }
+data_YT <- read_csv("C:/Users/hp/Desktop/freelancer work/Spotify_Youtube/data.csv")
+n=dim(data_YT)[1]
+set.seed(1251)
+train.index=sample(n, round(0.7*n))
+train=data_YT[train.index, ]
+test=data_YT[-train.index, ]
+
+```
+# Machine learning algorithms
+## Logistic regression
+
+#### Model 0
+```{r }
+logit.model=glm(liked~.,data=train,family="binomial")
+summary(logit.model)
+
+```
+
+```{r }
+prob_logit<- predict(logit.model,newdata=test,type="response")
+logit.pred <- ifelse(prob_logit > 0.5, 1, 0)
+logit.sum=confusionMatrix(data=as.factor(logit.pred), reference= as.factor(test$liked), positive="1")
+
+```
+
+```{r }
+logit.sum
+
+```
+
+```{r }
+roc(logit.pred,test$liked)
+plot.roc(logit.pred, test$liked)
+
+```
+
+#### Model 1
+```{r }
+
+logit.model1=glm(liked~danceability +energy+key+loudness+mode+speechiness+liveness+valence+tempo+duration_ms+time_signature,data=train,family="binomial")
+summary(logit.model1)
+
+```
+
+```{r }
+prob_logit1<- predict(logit.model1,newdata=test,type="response")
+logit1.pred <- ifelse(prob_logit1 > 0.5, 1, 0)
+logit1.sum=confusionMatrix(data=as.factor(logit1.pred), reference= as.factor(test$liked), positive="1")
+logit1.sum
+
+```
+
+```{r }
+roc(logit1.pred,test$liked)
+
+```
+
+```{r }
+plot.roc(logit1.pred, test$liked)
+
+
+```
+
+#### Model 2
+```{r }
+
+logit.model2=glm(liked~danceability +energy+loudness+tempo+duration_ms,data=train,family="binomial")
+
+summary(logit.model2)
+
+```
+
+```{r }
+glm.predict=predict(logit.model2,newdata=test,type="response")
+
+prob_logit2<- predict(logit.model2, test,type = "response")
+logit2.pred <- ifelse(prob_logit2 > 0.5, 1, 0)
+logit2.sum=confusionMatrix(data=as.factor(logit2.pred), reference= as.factor(test$liked), positive="1")
+logit2.sum
+
+```
+```{r }
+roc(logit2.pred,test$liked)
+
+```
+
+```{r }
+plot.roc(logit2.pred, test$liked)
+
+```
+
+## linear discriminant analysis
+#### Model 0
+```{r }
+library(MASS)
+lda0.fit = lda(liked ~ ., data =train)
+lda0.pred = predict(lda0.fit, test)
+lda0.sum=confusionMatrix(data=as.factor(lda0.pred[["class"]]), reference= as.factor(test$liked), positive="1")
+lda0.sum
+```
+
+```{r }
+roc(lda0.pred[["class"]], test$liked)
+```
+
+```{r }
+plot.roc(lda0.pred[["class"]], test$liked)
+```
+#### Model 1
+```{r }
+
+lda1.fit = lda(liked ~ danceability +energy+loudness+tempo+duration_ms, data =train)
+lda1.pred = predict(lda1.fit, test)
+lda1.sum=confusionMatrix(data=as.factor(lda1.pred[["class"]]), reference= as.factor(test$liked), positive="1")
+lda1.sum
+```
+
+```{r }
+roc(lda1.pred[["class"]], test$liked)
+```
+
+```{r }
+plot.roc(lda1.pred[["class"]], test$liked)
+```
+## quadratic discriminant analysis
+#### Model 0
+```{r }
+qda0.fit = qda(liked ~ ., data = train)
+qda0.class = predict(qda0.fit, test)$class
+qda0.sum=confusionMatrix(data=as.factor(qda0.class), reference= as.factor(test$liked), positive="1")
+qda0.sum
+```
+
+```{r }
+roc(qda0.class, test$liked)
+```
+
+```{r }
+plot.roc(qda0.class, test$liked)
+```
+#### Model 1
+```{r }
+
+qda1.fit = qda(liked ~danceability +energy+loudness+tempo+duration_ms, data = train)
+qda1.class = predict(qda1.fit, test)$class
+qda1.sum=confusionMatrix(data=as.factor(qda1.class), reference= as.factor(test$liked), positive="1")
+qda1.sum
+```
+
+```{r }
+roc(qda1.class, test$liked)
+```
+
+```{r }
+plot.roc(qda1.class, test$liked)
+```
+## K nearest neighbor
+#### Model 0
+```{r }
+train.X = train[, -14]
+test.X = test[, -14]
+train.y = train$liked
+
+k1=round((sqrt(NROW(train))),0)
+
+library(class)
+knn0.class = knn(train.X, test.X, train.y, k = 11)
+knn0.sum=confusionMatrix(data=as.factor(knn0.class), reference= as.factor(test$liked), positive="1")
+knn0.sum
+```
+
+```{r }
+roc(knn0.class, test$liked)
+```
+
+```{r }
+plot.roc(knn0.class, test$liked)
+```
+#### Model 1
+```{r }
+
+
+knn1.class = knn(train.X, test.X, train.y, k = 12)
+knn1.sum=confusionMatrix(data=as.factor(knn1.class), reference= as.factor(test$liked), positive="1")
+knn1.sum
+```
+
+```{r }
+roc(knn1.class, test$liked)
+```
+
+```{r }
+plot.roc(knn1.class, test$liked)
+```
+## Decision Tree
+#### Model 0
+```{r }
+
+
+#tree0
+tree <- rpart(liked ~., data = train)
+rpart.plot(tree)
+```
+
+```{r }
+printcp(tree)
+```
+
+```{r }
+plotcp(tree)
+```
+
+```{r }
+# Make predictions
+probabilities <- predict(tree, test.X)
+predicted.classes <- ifelse(probabilities > 0.5, 1, 0)
+# confusionMatrix
+tree.sum=confusionMatrix(data=as.factor(predicted.classes), reference= as.factor(test$liked), positive="1")
+tree.sum
+```
+
+```{r }
+roc(predicted.classes, test$liked)
+```
+
+```{r }
+plot.roc(predicted.classes, test$liked)
+```
+#### Model 1
+```{r }
+
+#tree
+tree1 <- rpart(liked ~., data = train,cp=0.034590)
+rpart.plot(tree1)
+```
+
+```{r }
+# Make predictions
+probabilities1 <- predict(tree1, test.X)
+predicted.classes1 <- ifelse(probabilities1 > 0.5, 1, 0)
+# confusionMatrix
+tree1.sum=confusionMatrix(data=as.factor(predicted.classes1), reference= as.factor(test$liked), positive="1")
+tree1.sum
+```
+
+```{r }
+roc(predicted.classes1, test$liked)
+```
+
+```{r }
+plot.roc(predicted.classes1, test$liked)
+```
+
+## Naive Bayes
+#### Model 0
+```{r }
+
+library(e1071)
+
+nb0.fit = naiveBayes(liked ~ ., data = train)
+nb0.class = predict(nb0.fit, test)
+nb0.sum=confusionMatrix(data=as.factor(nb0.class), reference= as.factor(test$liked), positive="1")
+nb0.sum
+```
+
+```{r }
+roc(nb0.class, test$liked)
+```
+
+```{r }
+plot.roc(nb0.class, test$liked)
+```
+#### Model 0
+```{r }
+
+
+
+nb1.fit = naiveBayes(liked ~ danceability +energy+loudness+speechiness+tempo+duration_ms, data = train)
+nb1.class = predict(nb1.fit, test)
+nb1.sum=confusionMatrix(data=as.factor(nb1.class), reference= as.factor(test$liked), positive="1")
+nb1.sum
+```
+
+```{r }
+roc(nb1.class, test$liked)
+```
+
+```{r }
+plot.roc(nb1.class, test$liked)
+```
+## Bagging
+#### Model 0
+```{r }
+library(rpart)
+library(caret)
+library(ipred)
+#bag0
+bag <- bagging(liked ~., data = train, nbagg=100,coob=TRUE,control=rpart.control(minsplit=2,cp=0))
+# Make predictions
+prob_bag <- predict(bag, test.X)
+pred.bag.classes <- ifelse(prob_bag > 0.5, 1, 0)
+# confusionMatrix
+bag.sum=confusionMatrix(data=as.factor(pred.bag.classes), reference= as.factor(test$liked), positive="1")
+bag.sum
+```
+
+```{r }
+roc(pred.bag.classes, test$liked)
+```
+
+```{r }
+plot.roc(pred.bag.classes, test$liked)
+```
+#### Model 1
+```{r }
+
+
+
+bag1 <- bagging(liked ~danceability +energy+loudness+tempo+duration_ms, data = train, nbag1g=100,coob=TRUE,control=rpart.control(minsplit=2,cp=0))
+# Make predictions
+prob_bag1 <- predict(bag1, test.X)
+pred.bag1.classes <- ifelse(prob_bag1 > 0.5, 1, 0)
+# confusionMatrix
+bag1.sum=confusionMatrix(data=as.factor(pred.bag1.classes), reference= as.factor(test$liked), positive="1")
+bag1.sum
+```
+
+```{r }
+roc(pred.bag1.classes, test$liked)
+```
+
+```{r }
+VI1<-data.frame(var=setdiff(names(train),"liked"),imp=varImp(bag))
+VI_plot<-VI1[order(VI1$Overall,decreasing = TRUE),]
+barplot(VI_plot$Overall,names.arg = row.names(VI_plot),horiz = TRUE,col='lightblue',xlab = "Varaible Impotance",las=2, cex.names = 0.5)
+```
+
+```{r }
+plot.roc(pred.bag1.classes, test$liked)
+```
+
+## Random forest
+#### Model 0
+```{r }
+library(randomForest)
+n_features<-length(setdiff(names(train),"liked"))
+rf<-randomForest(liked ~., data = train,mtry=floor(n_features/3),importance=TRUE)
+rf
+```
+
+```{r }
+rf$importance
+```
+
+```{r }
+plot(rf$mse,type='l',col=2,lwd=2,xlab="ntree",ylab="OOB Error")
+```
+
+```{r }
+
+# Make predictions
+prob_rf0 <- predict(rf, test.X)
+pred.rf0.classes <- ifelse(prob_rf0 > 0.5, 1, 0)
+# confusionMatrix
+rf0.sum=confusionMatrix(data=as.factor(pred.rf0.classes), reference= as.factor(test$liked), positive="1")
+rf0.sum
+```
+
+```{r }
+roc(pred.rf0.classes, test$liked)
+```
+#### Model 1
+```{r }
+
+
+
+rf1<-randomForest(liked ~., data = train,mtry=floor(sqrt(n_features/3)),importance=TRUE)
+rf1
+```
+
+```{r }
+rf1$importance
+```
+
+```{r }
+plot(rf1$mse,type='l',col=2,lwd=2,xlab="ntree",ylab="OOB Error")
+```
+
+```{r }
+
+# Make predictions
+prob_rf1 <- predict(rf1, test.X)
+pred.rf1.classes <- ifelse(prob_rf1 > 0.5, 1, 0)
+# confusionMatrix
+rf1.sum=confusionMatrix(data=as.factor(pred.rf1.classes), reference= as.factor(test$liked), positive="1")
+rf1.sum
+```
+
+```{r }
+roc(pred.rf1.classes, test$liked)
+```
